@@ -51,26 +51,15 @@ def check_for_hall_effect():
         return(saw, xspeed.value)
     
     else:
+        if pattern.is_dying:
+            xspeed.reset(0) # so average doesn't build up
         return(-1, xspeed.value)
-
-def update_pattern(which, speed):
-    global pattern_energy,pattern_last_cycle,pattern_speed
-
-    now = time.monotonic()
-
-    if speed == 0:
-        pattern.dying()
-
-    else:
-        print("up %d %d" % (which,speed))
-        pattern.follow( (which + 4) % len(touches), speed)
 
 while(True):
     which, speed = check_for_hall_effect()
 
     if (which == -1 ):
-        if time.monotonic() - last_touch > touch_timout:
-            update_pattern( -1, 0 ) # will fade out
+        pattern.update( -1, 0 ) # will fade out
     
     else:
         # when we see a hall-effect
@@ -78,6 +67,6 @@ while(True):
         # signal to processing
         print('*')
 
-        update_pattern( which, speed )
+        pattern.update( which, speed )
 
 print("EXIT")
