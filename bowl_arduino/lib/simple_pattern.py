@@ -1,4 +1,6 @@
 import time
+import simpleio
+
 class SimplePattern(object):
     def __init__(self, ring, brightness=0.3):
         self.ring = ring
@@ -35,12 +37,13 @@ class SimplePattern(object):
                             print("  died")
 
         else:
+            pixel_i = int( simpleio.map_range(which, 0, 4, 0, self.ring.n) )
             # new which/speed
             print("UPD %s %s" % (which, speed))
             self.ring.brightness = self.brightness
             self.energy = self.brightness
             self.speed = speed/1000.0
-            self.position = which
+            self.position = pixel_i
             self.last_update = now
 
         # continue

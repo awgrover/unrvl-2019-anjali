@@ -8,12 +8,13 @@
 import board
 import neopixel
 import time
+import digitalio
 from exponential_smooth import ExponentialSmooth
 from simple_pattern import SimplePattern
 
 # NeoPixel Ring
-RingPixelCount = 10
-ring = neopixel.NeoPixel(board.NEOPIXEL, RingPixelCount, brightness=0.2, auto_write=False)
+RingPixelCount = 24
+ring = neopixel.NeoPixel(board.D5, RingPixelCount, brightness=0.2, auto_write=False)
 
 # keepint track of "touches"
 touch_timout = 2.0 # sec
@@ -23,10 +24,10 @@ xspeed = ExponentialSmooth(3,0)
 # pattern
 pattern = SimplePattern(ring)
 
-# FIXME: fake touch as hall-effect
-import touchio
-from edge_detect import Edge
-touches = list( Edge( touchio.TouchIn( pin )) for pin in ( board.A1, board.A2, board.A3, board.A4, board.A5, board.A6, board.A7) )
+from adafruit_debouncer import Debouncer
+# touch_pins = ( digitalio.DigitalInOut(p) for p in ( board.A1, board.A2, board.A3, board.A4, board.A5, board.D7, board.D9, board.D10))
+touch_pins = list( digitalio.DigitalInOut(p) for p in ( board.D11, board.D10, board.D9, board.A5) )
+touches = list( Debouncer( pin ) for pin in touch_pins )
 
 def check_for_hall_effect():
     """return the i'th thing touched, and the current speed in msec/touch"""
@@ -37,8 +38,9 @@ def check_for_hall_effect():
     for i,a_touch in enumerate(touches):
         a_touch.update()
 
-        if a_touch.rose:
+        if a_touch.fell:
             saw = i
+            print("Fall %s" % i)
             if last_touch == 0:
                 xspeed.reset(0)
             else:
@@ -54,6 +56,11 @@ def check_for_hall_effect():
         if pattern.is_dying:
             xspeed.reset(0) # so average doesn't build up
         return(-1, xspeed.value)
+
+# SETUP
+for apin in touch_pins:
+    apin.direction = digitalio.Direction.INPUT
+    # external pull, so "no-detect" is TRUE, "detect" is FALSE
 
 while(True):
     which, speed = check_for_hall_effect()
